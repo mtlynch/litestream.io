@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="en-US">
+  <head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  
+  <link rel="stylesheet" href="/main.d65f98aaaa96b3c0d1c186545ad69eb8c5f99d405b363f829b41a3bda18746cd52af4a662c9c8f8e04c63a23fad9ffc0a103f70adbdcd4fd153a0e897e2af3fc.css" integrity="sha512-1l&#43;YqqqWs8DRwYZUWtaeuMX5nUBbNj&#43;Cm0GjvaGHRs1Sr0pmLJyPjgTGOiP62f/AoQP3Ctvc1P0VOg6Jfirz/A==" crossorigin="anonymous">
+<noscript><style>img.lazyload { display: none; }</style></noscript>
+
+<link rel="preconnect" href="https://fonts.gstatic.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;1,400;1,600&display=swap" rel="stylesheet">
+
+  <meta name="robots" content="index, follow">
+  <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+  <title>Tips &amp; Caveats - Litestream</title>
+<meta name="description" content="Litestream replicates SQLite databases in real-time to S3.">
+<link rel="canonical" href="https://litestream.io/tips/">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:image" content="https://litestream.io/images/twitter-image.png">
+<meta name="twitter:title" content="Tips &amp; Caveats">
+<meta name="twitter:description" content="Running an application that uses SQLite and Litestream can require some small tweaks to optimize performance and usability. There are also some important caveats to know.
+Busy timeout SQLite is built to run as a multi-process embedded database and Litestream acts as just another process. However, Litestream requires periodic but short write locks on the database when checkpointing occurs. SQLite will return an error by default if your application tries to obtain a write lock at the same time.">
+<meta name="twitter:site" content="@litestreamio">
+<meta name="twitter:creator" content="@benbjohnson">
+
+<meta name="twitter:site" content="@litestreamio">
+<meta name="twitter:creator" content="@benbjohnson">
+
+<script type="application/ld+json">
+{
+  "@context": "http://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [{
+        "@type": "ListItem",
+        "position":  1 ,
+        "name": "Home",
+        "item": "https:\/\/litestream.io\/"
+    },{
+        "@type": "ListItem",
+        "position":  2 ,
+        "name": "Tips",
+        "item": "https:\/\/litestream.io\/tips\/"
+    }]
+}
+</script>
+
+  <meta name="theme-color" content="#fff">
+<link rel="apple-touch-icon" sizes="180x180" href="https://litestream.io/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="https://litestream.io/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="https://litestream.io/favicon-16x16.png">
+<link rel="manifest" href="https://litestream.io/site.webmanifest">
+  
+</head>
+  <body class="page single">
+    <header class="navbar fixed-top navbar-expand-md navbar-light">
+  <div class="container align-items-baseline">
+    <input class="menu-btn order-0" type="checkbox" id="menu-btn">
+
+    <label class="menu-icon d-md-none" for="menu-btn"><span class="navicon"></span></label>
+
+    <a class="navbar-brand order-1 order-md-0 mr-auto" href="https://litestream.io/">
+      <img class="d-md-inline d-none" src="/images/logo.svg" />
+      <span class="d-sm-inline d-md-none">Litestream</span>
+    </a>
+
+    <ul class="navbar-nav social-nav order-3 order-md-5">
+      <li class="nav-item">
+          <a class="nav-link" href="https://twitter.com/litestreamio"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-twitter"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"></path></svg><span class="ml-2 sr-only">Twitter</span></a>
+        </li>
+      <li class="nav-item">
+          <a class="nav-link" href="https://github.com/benbjohnson/litestream"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-github"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"></path></svg><span class="ml-2 sr-only">GitHub</span></a>
+        </li>
+      </ul>
+
+    <div class="collapse navbar-collapse order-4 order-md-1">
+      <ul class="navbar-nav main-nav mr-auto order-5 order-md-2"><li class="nav-item">
+            <a class="nav-link" href="https://litestream.io/install">Install</a>
+          </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://litestream.io/guides">Guides</a>
+          </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://litestream.io/reference">Reference</a>
+          </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://github.com/benbjohnson/litestream">GitHub</a>
+          </li>
+        <li class="nav-item">
+            <a class="nav-link" href="https://join.slack.com/t/litestream/shared_invite/zt-3ed89j5s4-KODYR5v93N_0vHE_kDWCyg">Slack</a>
+          </li>
+        </ul>
+      <div class="break order-6 d-md-none"></div>
+    </div>
+  </div>
+</header>
+    <div class="wrap container" role="document">
+      <div class="content">
+        
+	<div class="row flex-xl-nowrap">
+		<div class="col-lg-5 col-xl-4 docs-sidebar">
+			<nav class="docs-links" aria-label="Main navigation">
+				<h3>
+    <a href="https://litestream.io/install">Install</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/install/mac/">macOS</a></li>
+    <li><a class="docs-link" href="https://litestream.io/install/debian/">Linux (Debian)</a></li>
+    <li><a class="docs-link" href="https://litestream.io/install/source/">Build from Source</a></li>
+    </ul>
+  <h3>
+    <a href="https://litestream.io/">General</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/getting-started/">Getting Started</a></li>
+    <li><a class="docs-link active" href="https://litestream.io/tips/">Tips &amp; Caveats</a></li>
+    <li><a class="docs-link" href="https://litestream.io/how-it-works/">How it works</a></li>
+    <li><a class="docs-link" href="https://litestream.io/alternatives/">Alternatives</a></li>
+    </ul>
+  <h3>
+    <a href="https://litestream.io/guides/">Infrastructure Guides</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/guides/docker/">Running in a Docker container</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/kubernetes/">Running in a Kubernetes cluster</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/systemd/">Running as a Systemd service</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/windows/">Running as a Windows Service</a></li>
+    </ul>
+  <h3>
+    <a href="https://litestream.io/guides/">Replica Guides</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/guides/s3/">Replicating to Amazon S3</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/azure/">Replicating to Azure Blob Storage</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/backblaze/">Replicating to Backblaze B2</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/digitalocean/">Replicating to DigitalOcean Spaces</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/scaleway/">Replicating to Scaleway Object Storage</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/gcs/">Replicating to Google Cloud Storage</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/linode/">Replicating to Linode Object Storage</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/sftp/">Replicating to an SFTP Server</a></li>
+    <li><a class="docs-link" href="https://litestream.io/guides/nats/">Replicating to NATS JetStream</a></li>
+    </ul>
+  <h3>
+    <a href="https://litestream.io/reference/">Reference</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/reference/config/">Configuration File</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/databases/">Command: databases</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/mcp/">Command: mcp</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/replicate/">Command: replicate</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/ltx/">Command: ltx</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/restore/">Command: restore</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/version/">Command: version</a></li>
+    <li><a class="docs-link" href="https://litestream.io/reference/wal/">Command: wal</a></li>
+    </ul>
+  <h3>
+    <a href="https://litestream.io/">help</a>
+  </h3>
+  <ul class="list-unstyled">
+    <li><a class="docs-link" href="https://litestream.io/docs/migration/">Migration Guide</a></li>
+    <li><a class="docs-link" href="https://litestream.io/docs/troubleshooting/">Troubleshooting</a></li>
+    </ul>
+  
+			</nav>        
+		</div>
+		<nav class="docs-toc d-none d-xl-block col-xl-3" aria-label="Secondary navigation">
+			<div class="page-links">
+    <h3>On this page</h3>
+    <nav id="TableOfContents">
+  <ul>
+    <li><a href="#busy-timeout">Busy timeout</a></li>
+    <li><a href="#wal-journal-mode">WAL journal mode</a></li>
+    <li><a href="#deleting-sqlite-databases">Deleting SQLite databases</a></li>
+    <li><a href="#synchronous-pragma">Synchronous PRAGMA</a></li>
+    <li><a href="#data-loss-window">Data loss window</a></li>
+    <li><a href="#increase-snapshots-frequency-to-improve-restore-performance">Increase snapshots frequency to improve restore performance</a></li>
+    <li><a href="#disable-autocheckpoints-for-high-write-load-servers">Disable autocheckpoints for high write load servers</a></li>
+    <li><a href="#multiple-applications-replicating-into-location-can-corrupt">Multiple applications replicating into location can corrupt</a></li>
+  </ul>
+</nav>
+  </div>
+
+		</nav>
+		<main class="docs-content col-lg-11 col-xl-9 mx-xl-auto">
+		<h1>Tips &amp; Caveats</h1>
+			<p class="lead"></p>
+			<p>Running an application that uses SQLite and Litestream can require some small
+tweaks to optimize performance and usability. There are also some important
+caveats to know.</p>
+<h2 id="busy-timeout">Busy timeout<a href="#busy-timeout" class="anchor" aria-hidden="true">#</a> </h2>
+<p>SQLite is built to run as a multi-process embedded database and Litestream acts
+as just another process. However, Litestream requires periodic but short write
+locks on the database when checkpointing occurs. SQLite will return an error by
+default if your application tries to obtain a write lock at the same time.</p>
+<p>To prevent this, your application will need to set the <a href="https://www.sqlite.org/pragma.html#pragma_busy_timeout"><code>busy_timeout</code>
+</a> pragma when it initializes the database connection. This pragma
+will wait up to a given number of milliseconds before failing a query if it is
+blocked on a write. It is recommended to set this to 5 seconds:</p>
+<pre tabindex="0"><code>PRAGMA busy_timeout = 5000;
+</code></pre><h2 id="wal-journal-mode">WAL journal mode<a href="#wal-journal-mode" class="anchor" aria-hidden="true">#</a> </h2>
+<p>Litestream only works with the SQLite <a href="https://sqlite.org/wal.html">WAL journaling mode</a>. This is the
+recommended mode for most applications as it generally performs better and
+allows for concurrent read access. Litestream will automatically set the
+database mode to <code>WAL</code> if it has not already been enabled by the application.</p>
+<h2 id="deleting-sqlite-databases">Deleting SQLite databases<a href="#deleting-sqlite-databases" class="anchor" aria-hidden="true">#</a> </h2>
+<p>If you&rsquo;re deleting and recreating a SQLite database from scratch, there are 3
+files which must be deleted:</p>
+<ul>
+<li>Database file</li>
+<li>Shared memory file (<code>-shm</code>)</li>
+<li>WAL file (<code>-wal</code>)</li>
+</ul>
+<p>If you delete your database file but not your WAL file then SQLite will try to
+apply those old WAL pages to your new database. Litestream also tracks changes
+via the WAL so it can cause replication issues if the WAL file is leftover.</p>
+<p>Additionally, Litestream currently does not track database deletions. If you
+remove your database and recreate it, you should delete the <code>-litestream</code>
+directory next to your database file and restart Litestream.</p>
+<h2 id="synchronous-pragma">Synchronous PRAGMA<a href="#synchronous-pragma" class="anchor" aria-hidden="true">#</a> </h2>
+<p>SQLite must call <code>fsync()</code> to flush data to disk to ensure transactions are
+durable. While in WAL journaling mode, fsync calls can be relaxed in exchange
+for durability without risking data corruption.</p>
+<p>To do this, you can change the <a href="https://www.sqlite.org/pragma.html#pragma_synchronous"><code>synchronous</code></a> mode to <code>NORMAL</code>
+(it typically <a href="https://github.com/sqlite/sqlite/blob/86fbbbf96440fddc6e691213495b563f2584fce1/src/sqliteInt.h#L1268-L1286">defaults</a> to <code>FULL</code>):</p>
+<pre tabindex="0"><code>PRAGMA synchronous = NORMAL;
+</code></pre><p>This mode will ensure that the <code>fsync()</code> calls are only called when the WAL
+becomes full and has to checkpoint to the main database file. This is safe as
+the WAL file is append only.</p>
+<h2 id="data-loss-window">Data loss window<a href="#data-loss-window" class="anchor" aria-hidden="true">#</a> </h2>
+<p>Litestream performs <em>asynchronous replication</em> which means that changes are
+replicated out-of-band from the transaction that wrote the changes. This is how
+many replication tools work including <a href="https://www.postgresql.org/docs/9.3/warm-standby.html">PostgreSQL&rsquo;s log-shipping
+replication</a>. Asynchronous replication is typically much faster than
+synchronous replication but it trades off durability of recent writes.</p>
+<p>By default, Litestream will replicate new changes to an S3 replica every
+second. During this time where data has not yet been replicated, a catastrophic
+crash on your server will result in the loss of data in that time window.</p>
+<p>For more typical shutdown scenarios, when Litestream receives a signal to close,
+it will attempt to synchronize all outstanding WAL changes to the S3 replica before terminating.</p>
+<p>Synchronous replication is on the Litestream roadmap but has not yet been
+implemented.</p>
+<h2 id="increase-snapshots-frequency-to-improve-restore-performance">Increase snapshots frequency to improve restore performance<a href="#increase-snapshots-frequency-to-improve-restore-performance" class="anchor" aria-hidden="true">#</a> </h2>
+<p>By default, the <code>snapshot-interval</code> on a replica is unset so a new snapshot is
+taken when the previous snapshot is removed because of retention. For example,
+if your retention policy is the default setting of <code>24h</code> then a new snapshot
+will be taken once per day.</p>
+<p>However, if you&rsquo;re writing data often then WAL files will build up over that
+time period and increase your restore time. If you have frequent writes then it
+is recommended to either decrease your <code>retention</code> period or to set the
+<code>snapshot-interval</code> to something lower such as <code>1h</code>.</p>
+<p>For example, if your <code>retention</code> period is one day and your <code>snapshot-interval</code>
+is one hour then you will see a rolling set of 24 snapshots for your replica.</p>
+<h2 id="disable-autocheckpoints-for-high-write-load-servers">Disable autocheckpoints for high write load servers<a href="#disable-autocheckpoints-for-high-write-load-servers" class="anchor" aria-hidden="true">#</a> </h2>
+<blockquote>
+<p><strong>Note:</strong> Checkpoint detection improvements in v0.5.0+ reduce the need for full snapshots when checkpoints occur.</p>
+</blockquote>
+<p>By default, SQLite allows any process to perform a checkpoint. A checkpoint is
+when pages that are written to the WAL are copied back to the main database
+file. Litestream works by controlling this checkpointing process and
+replicating the pages before they get copied back into the main database.
+Litestream prevents other processes from checkpointing by maintaining a read
+lock on the database in between its checkpoint requests.</p>
+<p>However, under high load with many small write transactions (e.g. tens of
+thousands per second), the application&rsquo;s SQLite instance can perform a
+checkpoint in between Litestream-initiated checkpoints and cause Litestream
+to miss a WAL file. When Litestream notices this it will force a new
+generation and take a full snapshot to ensure consistency.</p>
+<p>To prevent this, it is recommended to run your application with
+autocheckpointing disabled. To do this, run the following PRAGMA when you
+open your SQLite connection:</p>
+<pre tabindex="0"><code>PRAGMA wal_autocheckpoint = 0;
+</code></pre><h2 id="multiple-applications-replicating-into-location-can-corrupt">Multiple applications replicating into location can corrupt<a href="#multiple-applications-replicating-into-location-can-corrupt" class="anchor" aria-hidden="true">#</a> </h2>
+<p>Multiple applications replicating into the same bucket &amp; path can cause situations
+where you will be unable to restore. It is <em>your</em> responsibility to ensure you
+do not have multiple applications replicating concurrently. In the off-chance
+that it does happen, and you&rsquo;re unable to restore, you may see an error along
+the lines of:</p>
+<pre tabindex="0"><code>cannot find max wal index for restore: missing initial wal segment: generation=f6d6d1e96d38dafb index=00000093 offset=4152
+</code></pre><p>In this case, manually copy your most recent snapshot in
+<code>generations/&lt;id&gt;/snapshots/&lt;snapshot&gt;.lz4</code> and decompress with <code>lz4</code>.</p>
+<p>It&rsquo;s a good idea to perform an integrity check on the database using <code>sqlite3</code>:</p>
+<pre tabindex="0"><code>$ sqlite3 /path/to/db
+sqlite&gt; PRAGMA integrity_check;
+ok
+</code></pre><p>You now use this snapshot file as your application&rsquo;s database file and continue
+replicating it again with Litestream.</p>
+
+			<div class="docs-navigation d-flex justify-content-between">
+	
+	</div>
+
+		</main>
+	</div>
+
+      </div>
+    </div>
+    
+    
+    <footer>
+</footer>
+    
+    <script src="https://litestream.io/main.f4006b8dd3163d19fa41adf9892089fe185101b404b96884ed2a22ec4e9cb0706759ecdb3f4520a1d37fc5ad7a90a8d90abfb30055a1ff67aefb5b2324355d12.js" integrity="sha512-9ABrjdMWPRn6Qa35iSCJ/hhRAbQEuWiE7Soi7E6csHBnWezbP0UgodN/xa16kKjZCr&#43;zAFWh/2eu&#43;1sjJDVdEg==" crossorigin="anonymous" defer></script>
+  <script src="https://litestream.io/index.min.e04ee49e690eded37dc03980e051ea16b5eb8ab2b615fd73ace1ada6e873b5d02f05e3c8aa463936f9bb9377f2096ac5e07deee2d61ec3fd427e14afe7b813b5.js" integrity="sha512-4E7knmkO3tN9wDmA4FHqFrXrirK2Ff1zrOGtpuhztdAvBePIqkY5Nvm7k3fyCWrF4H3u4tYew/1CfhSv57gTtQ==" crossorigin="anonymous" defer></script>
+
+  </body>
+</html>
